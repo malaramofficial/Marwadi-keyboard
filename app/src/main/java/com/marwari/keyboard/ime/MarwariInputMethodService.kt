@@ -170,7 +170,7 @@ class MarwariInputMethodService : InputMethodService() {
             ic.performEditorAction(action)
         } else {
             // Multi-line fields get a real newline.
-            sendDownUpKeyEvent(KeyEvent.KEYCODE_ENTER)
+            sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
         }
     }
 
