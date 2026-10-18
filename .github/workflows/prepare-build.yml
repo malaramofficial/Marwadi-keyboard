@@ -1,0 +1,88 @@
+name: Prepare Marwadi source and build APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "marwari-keyboard.tar.gz"
+      - ".github/workflows/prepare-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unpack-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Inspect and extract source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f marwari-keyboard.tar.gz
+          mkdir -p /tmp/marwadi-source
+          tar -tzf marwari-keyboard.tar.gz | head -200
+          tar -xzf marwari-keyboard.tar.gz -C /tmp/marwadi-source
+          PROJECT_DIR="$(find /tmp/marwadi-source -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit | xargs -r dirname)"
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "::error::No settings.gradle or settings.gradle.kts found in the archive."
+            find /tmp/marwadi-source -maxdepth 4 -type f | head -200
+            exit 1
+          fi
+          echo "Project root found: $PROJECT_DIR"
+          rsync -a --exclude='.git' --exclude='.github' "$PROJECT_DIR"/ ./
+          echo "Extracted project files:"
+          find . -maxdepth 4 -type f | sort | head -250
+
+      - name: Ensure Gradle is available
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Commit extracted source into repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Extract Marwadi Keyboard Android source"
+            git push
+          else
+            echo "No source changes to commit."
+          fi
+
+      - name: Build debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew --no-daemon assembleDebug
+          else
+            gradle --no-daemon assembleDebug
+          fi
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Marwadi-Keyboard-debug-apk
+          path: "**/build/outputs/apk/debug/*.apk"
+          if-no-files-found: error
+          retention-days: 14
