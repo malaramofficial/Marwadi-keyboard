@@ -29,15 +29,8 @@ jobs:
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
         with:
-          # Do not request the removed legacy "tools" package; it makes sdkmanager fail.
-          packages: |
-            platform-tools
-            platforms;android-34
-            platforms;android-35
-            platforms;android-36
-            build-tools;34.0.0
-            build-tools;35.0.0
-            build-tools;36.0.0
+          # The action expects a comma-separated package list, not a YAML multiline string.
+          packages: platform-tools,platforms;android-35,build-tools;35.0.0
 
       - name: Extract Android source
         shell: bash
