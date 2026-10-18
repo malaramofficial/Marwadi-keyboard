@@ -381,6 +381,170 @@ jobs:
           marwari_dictionary.json शुरुआती सूची है, आधिकारिक मानक नहीं; क्षेत्र के अनुसार वर्तनी बदल सकती है। Keyboard text store, log या server पर नहीं भेजता। Offline word-meaning helper डिवाइस पर चलता है। Natural sentence translation अभी configured नहीं है।
           EOF
 
+          # Add voice typing entry point and Hindi-to-Roman transliteration.
+          mkdir -p app/src/main/java/com/marwari/keyboard/voice
+          cat > app/src/main/java/com/marwari/keyboard/voice/DevanagariToRoman.kt <<'EOF'
+          package com.marwari.keyboard.voice
+
+          /** Lightweight offline transliteration; this is not a translation engine. */
+          object DevanagariToRoman {
+              private val consonants = mapOf(
+                  'क' to "k", 'ख' to "kh", 'ग' to "g", 'घ' to "gh", 'ङ' to "ng",
+                  'च' to "ch", 'छ' to "chh", 'ज' to "j", 'झ' to "jh", 'ञ' to "ny",
+                  'ट' to "t", 'ठ' to "th", 'ड' to "d", 'ढ' to "dh", 'ण' to "n",
+                  'त' to "t", 'थ' to "th", 'द' to "d", 'ध' to "dh", 'न' to "n",
+                  'प' to "p", 'फ' to "ph", 'ब' to "b", 'भ' to "bh", 'म' to "m",
+                  'य' to "y", 'र' to "r", 'ल' to "l", 'व' to "v", 'श' to "sh",
+                  'ष' to "sh", 'स' to "s", 'ह' to "h", 'ळ' to "l", 'क़' to "q",
+                  'ख़' to "kh", 'ग़' to "gh", 'ज़' to "z", 'ड़' to "r", 'ढ़' to "rh",
+                  'फ़' to "f"
+              )
+              private val vowels = mapOf(
+                  'अ' to "a", 'आ' to "aa", 'इ' to "i", 'ई' to "ee", 'उ' to "u",
+                  'ऊ' to "oo", 'ऋ' to "ri", 'ए' to "e", 'ऐ' to "ai", 'ओ' to "o",
+                  'औ' to "au", 'ऑ' to "o"
+              )
+              private val matras = mapOf(
+                  'ा' to "aa", 'ि' to "i", 'ी' to "ee", 'ु' to "u", 'ू' to "oo",
+                  'ृ' to "ri", 'े' to "e", 'ै' to "ai", 'ो' to "o", 'ौ' to "au",
+                  'ॉ' to "o", 'ॅ' to "e"
+              )
+
+              fun transliterate(input: String): String {
+                  val out = StringBuilder()
+                  var pendingA = false
+                  fun removePendingA() {
+                      if (pendingA && out.isNotEmpty() && out.last() == 'a') out.deleteCharAt(out.lastIndex)
+                      pendingA = false
+                  }
+                  for (ch in input) {
+                      when {
+                          consonants.containsKey(ch) -> {
+                              out.append(consonants.getValue(ch)).append('a')
+                              pendingA = true
+                          }
+                          matras.containsKey(ch) -> {
+                              removePendingA()
+                              out.append(matras.getValue(ch))
+                          }
+                          ch == '्' -> removePendingA()
+                          vowels.containsKey(ch) -> {
+                              removePendingA()
+                              out.append(vowels.getValue(ch))
+                          }
+                          ch == 'ं' || ch == 'ँ' -> { out.append('n'); pendingA = false }
+                          ch == 'ः' -> { out.append('h'); pendingA = false }
+                          ch == '़' -> Unit
+                          ch == '़' -> Unit
+                          ch.isWhitespace() || ch in ".,!?;:।॥-()[]" -> {
+                              removePendingA()
+                              out.append(ch)
+                          }
+                          ch in '०'..'९' -> { out.append(('0'.code + (ch.code - '०'.code)).toChar()); pendingA = false }
+                          ch.code < 128 -> { out.append(ch); pendingA = false }
+                          else -> { out.append(ch); pendingA = false }
+                      }
+                  }
+                  removePendingA()
+                  return out.toString()
+              }
+          }
+          EOF
+
+          cat > app/src/main/java/com/marwari/keyboard/voice/VoiceInputActivity.kt <<'EOF'
+          package com.marwari.keyboard.voice
+
+          import android.Manifest
+          import android.app.Activity
+          import android.content.Intent
+          import android.content.pm.PackageManager
+          import android.os.Bundle
+          import android.speech.RecognizerIntent
+          import android.speech.SpeechRecognizer
+          import android.widget.Toast
+
+          /** Opens the device's speech recognizer and returns romanized text to the keyboard. */
+          class VoiceInputActivity : Activity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+                      Toast.makeText(this, "इस फोन में speech recognition उपलब्ध नहीं है।", Toast.LENGTH_LONG).show()
+                      finish()
+                      return
+                  }
+                  if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                      requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_MIC)
+                  } else {
+                      launchRecognizer()
+                  }
+              }
+
+              override fun onRequestPermissionsResult(
+                  requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+              ) {
+                  super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+                  if (requestCode == REQUEST_MIC && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                      launchRecognizer()
+                  } else {
+                      Toast.makeText(this, "वॉइस टाइपिंग के लिए माइक्रोफोन की अनुमति दें।", Toast.LENGTH_LONG).show()
+                      finish()
+                  }
+              }
+
+              private fun launchRecognizer() {
+                  try {
+                      val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                          putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                          putExtra(RecognizerIntent.EXTRA_LANGUAGE, "hi-IN")
+                          putExtra(RecognizerIntent.EXTRA_PROMPT, "मारवाड़ी में बोलें")
+                          putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+                      }
+                      startActivityForResult(intent, REQUEST_SPEECH)
+                  } catch (_: Exception) {
+                      Toast.makeText(this, "वॉइस पहचान शुरू नहीं हो सकी।", Toast.LENGTH_LONG).show()
+                      finish()
+                  }
+              }
+
+              @Deprecated("Uses activity result API for broad device compatibility")
+              override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+                  super.onActivityResult(requestCode, resultCode, data)
+                  if (requestCode == REQUEST_SPEECH && resultCode == RESULT_OK) {
+                      val heard = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull().orEmpty()
+                      if (heard.isNotBlank()) {
+                          val roman = DevanagariToRoman.transliterate(heard)
+                          sendBroadcast(Intent(ACTION_VOICE_TEXT).setPackage(packageName).putExtra(EXTRA_TEXT, roman))
+                      }
+                  }
+                  finish()
+              }
+
+              companion object {
+                  const val ACTION_VOICE_TEXT = "com.marwari.keyboard.VOICE_TEXT"
+                  const val EXTRA_TEXT = "voice_text"
+                  private const val REQUEST_MIC = 4101
+                  private const val REQUEST_SPEECH = 4102
+              }
+          }
+          EOF
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("app/src/main/AndroidManifest.xml")
+          s = p.read_text(encoding="utf-8")
+          if "android.permission.RECORD_AUDIO" not in s:
+              s = s.replace('    <application', '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n\n    <application', 1)
+          activity = '''        <activity
+                      android:name=".voice.VoiceInputActivity"
+                      android:exported="false"
+                      android:label="मारवाड़ी वॉइस टाइपिंग" />
+          
+          '''
+          if '.voice.VoiceInputActivity' not in s:
+              s = s.replace('        <!-- The keyboard itself. Only the Android input framework may bind to it. -->', activity + '        <!-- The keyboard itself. Only the Android input framework may bind to it. -->', 1)
+          p.write_text(s, encoding="utf-8")
+          PY
+
           # Fix the InputMethodService API name in the archived starter source.
           sed -i 's/sendDownUpKeyEvent(/sendDownUpKeyEvents(/g' app/src/main/java/com/marwari/keyboard/ime/MarwariInputMethodService.kt
 
