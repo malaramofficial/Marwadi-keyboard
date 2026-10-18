@@ -377,6 +377,9 @@ jobs:
           marwari_dictionary.json शुरुआती सूची है, आधिकारिक मानक नहीं; क्षेत्र के अनुसार वर्तनी बदल सकती है। Keyboard text store, log या server पर नहीं भेजता। Offline word-meaning helper डिवाइस पर चलता है। Natural sentence translation अभी configured नहीं है।
           EOF
 
+          # Fix the InputMethodService API name in the archived starter source.
+          sed -i 's/sendDownUpKeyEvent(/sendDownUpKeyEvents(/g' app/src/main/java/com/marwari/keyboard/ime/MarwariInputMethodService.kt
+
       - name: Ensure Gradle is available
         uses: gradle/actions/setup-gradle@v4
         with:
