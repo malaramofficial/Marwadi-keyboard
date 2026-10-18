@@ -29,7 +29,7 @@ jobs:
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Inspect and extract source archive
+      - name: Extract Android source
         shell: bash
         run: |
           set -euo pipefail
@@ -39,21 +39,335 @@ jobs:
           tar -xzf marwari-keyboard.tar.gz -C /tmp/marwadi-source
           PROJECT_DIR="$(find /tmp/marwadi-source -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit | xargs -r dirname)"
           if [ -z "$PROJECT_DIR" ]; then
-            echo "::error::No settings.gradle or settings.gradle.kts found in the archive."
-            find /tmp/marwadi-source -maxdepth 4 -type f | head -200
+            echo "::error::No Gradle Android project found in the archive."
+            find /tmp/marwadi-source -maxdepth 5 -type f | head -200
             exit 1
           fi
-          echo "Project root found: $PROJECT_DIR"
+          echo "Project root: $PROJECT_DIR"
           rsync -a --exclude='.git' --exclude='.github' "$PROJECT_DIR"/ ./
-          echo "Extracted project files:"
-          find . -maxdepth 4 -type f | sort | head -250
+
+      - name: Improve Marwari typing and add offline word meanings
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > app/src/main/java/com/marwari/keyboard/suggest/WordSuggestionEngine.kt <<'EOF'
+          package com.marwari.keyboard.suggest
+
+          data class DictionaryEntry(
+              val word: String,
+              val meaning: String = "",
+              val variants: List<String> = emptyList()
+          )
+
+          /** Roman Marwari suggestions with regional spellings and conservative typo tolerance. */
+          class WordSuggestionEngine(entries: List<DictionaryEntry>) {
+              private val entries = entries.toList()
+
+              fun suggest(typed: String, limit: Int = MAX_SUGGESTIONS): List<String> {
+                  val prefix = typed.trim().lowercase()
+                  if (prefix.isEmpty() || limit <= 0) return emptyList()
+                  return entries.asSequence()
+                      .filter { !it.word.contains(' ') }
+                      .mapNotNull { entry ->
+                          val canonical = entry.word.lowercase()
+                          val variants = entry.variants.map { it.lowercase() }
+                          val score = when {
+                              canonical.startsWith(prefix) -> 0
+                              variants.any { it.startsWith(prefix) } -> 1
+                              prefix.length >= 3 && (
+                                  oneEditAway(prefix, canonical.take(prefix.length)) ||
+                                  variants.any { oneEditAway(prefix, it.take(prefix.length)) }
+                              ) -> 2
+                              else -> return@mapNotNull null
+                          }
+                          if (canonical == prefix) null else Triple(score, entries.indexOf(entry), entry.word)
+                      }
+                      .sortedWith(compareBy<Triple<Int, Int, String>> { it.first }.thenBy { it.second })
+                      .map { it.third }.distinct().take(limit).toList()
+              }
+
+              private fun oneEditAway(a: String, b: String): Boolean {
+                  if (kotlin.math.abs(a.length - b.length) > 1) return false
+                  var i = 0
+                  var j = 0
+                  var edits = 0
+                  while (i < a.length && j < b.length) {
+                      if (a[i] == b[j]) { i++; j++ }
+                      else {
+                          edits++
+                          if (edits > 1) return false
+                          when {
+                              a.length > b.length -> i++
+                              b.length > a.length -> j++
+                              else -> { i++; j++ }
+                          }
+                      }
+                  }
+                  if (i < a.length || j < b.length) edits++
+                  return edits <= 1
+              }
+
+              companion object {
+                  const val MAX_SUGGESTIONS = 3
+                  fun currentWord(textBeforeCursor: CharSequence): String =
+                      textBeforeCursor.takeLastWhile { it.isLetter() }.toString()
+                  fun matchCase(suggestion: String, typed: String): String = when {
+                      typed.isEmpty() -> suggestion
+                      typed.length > 1 && typed.all { it.isUpperCase() } -> suggestion.uppercase()
+                      typed.first().isUpperCase() -> suggestion.replaceFirstChar { it.uppercaseChar() }
+                      else -> suggestion
+                  }
+              }
+          }
+          EOF
+
+          cat > app/src/main/java/com/marwari/keyboard/MainActivity.kt <<'EOF'
+          package com.marwari.keyboard
+
+          import android.app.Activity
+          import android.content.Intent
+          import android.graphics.Color
+          import android.os.Bundle
+          import android.provider.Settings
+          import android.text.InputType
+          import android.view.inputmethod.InputMethodManager
+          import android.widget.Button
+          import android.widget.EditText
+          import android.widget.LinearLayout
+          import android.widget.TextView
+          import com.marwari.keyboard.data.MarwariDictionaryRepository
+
+          /** Hindi-first setup screen and offline word-by-word English meaning helper. */
+          class MainActivity : Activity() {
+              private lateinit var statusView: TextView
+              private lateinit var translationInput: EditText
+              private lateinit var translationOutput: TextView
+
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  val pad = (20 * resources.displayMetrics.density).toInt()
+                  val ink = Color.rgb(31, 42, 36)
+                  val root = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setPadding(pad, pad, pad, pad)
+                      setBackgroundColor(Color.rgb(251, 248, 241))
+                  }
+                  root.addView(TextView(this).apply {
+                      text = "मारवाड़ी कीबोर्ड"
+                      textSize = 28f
+                      setTextColor(ink)
+                  })
+                  root.addView(TextView(this).apply {
+                      text = "रोमन अक्षरों में मारवाड़ी लिखें। शब्दों के सुझाव भी मिलेंगे।"
+                      textSize = 16f
+                      setTextColor(ink)
+                      setPadding(0, pad / 2, 0, pad / 2)
+                  })
+                  statusView = TextView(this).apply { textSize = 15f; setTextColor(ink) }
+                  root.addView(statusView)
+                  root.addView(Button(this).apply {
+                      text = "कीबोर्ड चालू करें"
+                      setOnClickListener { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
+                  })
+                  root.addView(Button(this).apply {
+                      text = "कीबोर्ड चुनें"
+                      setOnClickListener {
+                          (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker()
+                      }
+                  })
+                  root.addView(TextView(this).apply {
+                      text = "मारवाड़ी से English शब्दार्थ"
+                      textSize = 20f
+                      setTextColor(ink)
+                      setPadding(0, pad, 0, pad / 3)
+                  })
+                  translationInput = EditText(this).apply {
+                      hint = "जैसे: mharo naam ram hai"
+                      inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                      minLines = 2
+                  }
+                  root.addView(translationInput)
+                  root.addView(Button(this).apply {
+                      text = "शब्दार्थ देखें"
+                      setOnClickListener { showWordMeanings() }
+                  })
+                  translationOutput = TextView(this).apply {
+                      text = "यह ऑफलाइन शब्द-दर-शब्द मदद है, पूरा वाक्य-अनुवाद नहीं।"
+                      textSize = 16f
+                      setTextColor(ink)
+                      setPadding(0, pad / 2, 0, 0)
+                  }
+                  root.addView(translationOutput)
+                  setContentView(root)
+              }
+
+              override fun onResume() {
+                  super.onResume()
+                  refreshStatus()
+              }
+
+              private fun refreshStatus() {
+                  val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                  val enabled = imm.enabledInputMethodList.any { it.packageName == packageName }
+                  val currentIme = Settings.Secure.getString(
+                      contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD
+                  ).orEmpty()
+                  val selected = currentIme.startsWith(packageName)
+                  statusView.text = when {
+                      !enabled -> "स्थिति: कीबोर्ड अभी चालू नहीं है।"
+                      !selected -> "स्थिति: कीबोर्ड चालू है, लेकिन चुना नहीं गया।"
+                      else -> "स्थिति: मारवाड़ी कीबोर्ड चालू और चुना हुआ है।"
+                  }
+              }
+
+              private fun showWordMeanings() {
+                  val dictionary = MarwariDictionaryRepository(this).load()
+                      .associate { it.word.lowercase() to it.meaning }
+                  val words = translationInput.text.toString().trim().split(Regex("\\s+"))
+                      .filter { it.isNotBlank() }
+                  if (words.isEmpty()) {
+                      translationOutput.text = "पहले मारवाड़ी शब्द लिखें।"
+                      return
+                  }
+                  translationOutput.text = words.joinToString("  ") { raw ->
+                      val clean = raw.trim { !it.isLetter() }
+                      val meaning = dictionary[clean.lowercase()].orEmpty()
+                      if (meaning.isBlank()) "$raw → (अर्थ शब्दकोश में नहीं है)" else "$raw → $meaning"
+                  } + "\\n\\nनोट: यह शब्द-दर-शब्द मदद है; प्राकृतिक वाक्य-अनुवाद के लिए ऑनलाइन अनुवाद सेवा जोड़नी होगी।"
+              }
+          }
+          EOF
+
+          cat > app/src/main/res/values/strings.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">मारवाड़ी कीबोर्ड</string>
+              <string name="ime_label">मारवाड़ी कीबोर्ड</string>
+          </resources>
+          EOF
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("app/src/main/assets/marwari_dictionary.json")
+          entries = json.loads(p.read_text(encoding="utf-8"))
+          existing = {e["word"].lower() for e in entries}
+          additions = [
+            ("batao","tell me",["btao"]), ("samjho","understand",[]),
+            ("likho","write",[]), ("padhho","read / study",["padho"]),
+            ("boliyo","please speak",[]), ("suniyo","please listen",[]),
+            ("jaldi","quickly",[]), ("dhire","slowly",["dheere"]),
+            ("saro","good / fine",["saaro"]), ("theek","okay / fine",["thik"]),
+            ("kem","how",["kaim"]), ("parivaar","family",["parivar"]),
+            ("mitra","friend",[]), ("khush","happy",[]), ("dukhi","sad",[]),
+            ("bhookh","hunger",["bhukh"]), ("pyaas","thirst",["pyas"]),
+            ("baitho","sit",[]), ("utho","get up",[]), ("rukho","wait / stop",["ruko"]),
+            ("madad","help",[]), ("dhanyavaad","thank you",["dhanyavad"]),
+            ("maaf","sorry / forgive",[]), ("khabar","news / information",[]),
+            ("aavjo","goodbye / come again",["avjo"]), ("naam","name",[]),
+            ("bajar","market",["bazaar"]), ("kheti","farming",[]),
+            ("kisan","farmer",[]), ("pashu","animal / livestock",[]),
+            ("sacho","true",["saacho"]), ("jhooth","lie / falsehood",[]),
+            ("aapro","our",["aapno"]), ("aapri","ours",["aapni"]),
+            ("thare","your / at your place",[]), ("mhare","my / at my place",[]),
+            ("kune","who / to whom",["kun"]), ("ketro","how much",["kitro"]),
+            ("hivde","heart",[]), ("aankh","eye",["aakh"]), ("haath","hand",["hath"]),
+            ("pagh","turban",["pag"]), ("kapda","cloth",["kapdo"]),
+            ("rang","colour",[]), ("safed","white",[]), ("kalo","black",["kaalo"]),
+            ("neelo","blue",["nilo"]), ("hariyo","green",[]),
+            ("chhoto","small / young",["choto"]), ("moto","big",[]),
+            ("navi","new",["nayi"]), ("purano","old",[]), ("savere","in the morning",["sawere"]),
+            ("raat","night",[]), ("mausam","weather / season",[]), ("varsad","rain",["barsaat"])
+          ]
+          for word, meaning, variants in additions:
+              if word.lower() not in existing:
+                  entries.append({"word": word, "meaning": meaning, "variants": variants})
+                  existing.add(word.lower())
+          p.write_text(json.dumps(entries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print(f"Dictionary now contains {len(entries)} entries.")
+          PY
+
+          cat > app/src/test/java/com/marwari/keyboard/suggest/WordSuggestionEngineTest.kt <<'EOF'
+          package com.marwari.keyboard.suggest
+
+          import org.junit.Assert.assertEquals
+          import org.junit.Assert.assertTrue
+          import org.junit.Test
+
+          class WordSuggestionEngineTest {
+              private val engine = WordSuggestionEngine(listOf(
+                  DictionaryEntry("mharo", "my / our", listOf("mhaaro")),
+                  DictionaryEntry("mhane", "to me"),
+                  DictionaryEntry("ram ram", "greeting"),
+                  DictionaryEntry("ghano", "very")
+              ))
+              @Test fun prefixReturnsWordsInDictionaryOrder() {
+                  assertEquals(listOf("mharo", "mhane"), engine.suggest("mh"))
+              }
+              @Test fun matchingIgnoresCase() {
+                  assertEquals(listOf("mharo", "mhane"), engine.suggest("MH"))
+              }
+              @Test fun variantReturnsCanonicalWord() {
+                  assertEquals(listOf("mharo"), engine.suggest("mhaa"))
+              }
+              @Test fun oneCharacterTypoCanStillSuggestWord() {
+                  assertEquals(listOf("mharo"), engine.suggest("mharx"))
+              }
+              @Test fun exactWordIsNotSuggestedAgain() {
+                  assertTrue(engine.suggest("ghano").isEmpty())
+              }
+              @Test fun emptyAndUnknownPrefixesReturnNothing() {
+                  assertTrue(engine.suggest("").isEmpty())
+                  assertTrue(engine.suggest("xyz").isEmpty())
+              }
+              @Test fun limitIsRespected() {
+                  assertEquals(listOf("mharo"), engine.suggest("mh", limit = 1))
+              }
+              @Test fun phrasesAreNotSuggestedAsSingleWordReplacement() {
+                  assertTrue(engine.suggest("ram").isEmpty())
+              }
+              @Test fun currentWordIsTrailingLettersOnly() {
+                  assertEquals("mh", WordSuggestionEngine.currentWord("kal mh"))
+                  assertEquals("", WordSuggestionEngine.currentWord("kal "))
+              }
+              @Test fun matchCaseFollowsTypedText() {
+                  assertEquals("mharo", WordSuggestionEngine.matchCase("mharo", "mh"))
+                  assertEquals("Mharo", WordSuggestionEngine.matchCase("mharo", "M"))
+                  assertEquals("MHARO", WordSuggestionEngine.matchCase("mharo", "MH"))
+              }
+          }
+          EOF
+
+          cat > README.md <<'EOF'
+          # मारवाड़ी कीबोर्ड (Android)
+
+          Roman/English अक्षरों से मारवाड़ी टाइप करने के लिए शुरुआती Android system keyboard.
+
+          ## अभी क्या काम करता है
+          - असली Android system keyboard (IME), केवल preview नहीं।
+          - QWERTY, Shift, Backspace, Space, Enter और symbols.
+          - स्थानीय शब्दकोश, क्षेत्रीय वर्तनी के variants और सीमित one-character typo suggestions.
+          - हिंदी setup screen और offline word-by-word English meanings.
+          - Password fields में suggestions बंद; typed text store या log नहीं किया जाता।
+
+          ## अभी बाकी है
+          - प्राकृतिक sentence translation के लिए सुरक्षित HTTPS backend/API.
+          - मारवाड़ी बोलने वालों से dictionary spelling review.
+          - अलग app icon, emoji/voice input और वास्तविक फोन/WhatsApp testing.
+
+          ## Build और install
+          GitHub Actions में Prepare Marwadi source and build APK workflow debug APK बनाकर artifact अपलोड करता है। APK install करें, ऐप खोलें, कीबोर्ड चालू करें और Android settings में enable करके कीबोर्ड चुनें।
+
+          ## Dictionary और privacy
+          marwari_dictionary.json शुरुआती सूची है, आधिकारिक मानक नहीं; क्षेत्र के अनुसार वर्तनी बदल सकती है। Keyboard text store, log या server पर नहीं भेजता। Offline word-meaning helper डिवाइस पर चलता है। Natural sentence translation अभी configured नहीं है।
+          EOF
 
       - name: Ensure Gradle is available
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
 
-      - name: Commit extracted source into repository
+      - name: Commit source and improvements
         shell: bash
         run: |
           set -euo pipefail
@@ -61,7 +375,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if ! git diff --cached --quiet; then
-            git commit -m "Extract Marwadi Keyboard Android source"
+            git commit -m "Improve Marwari typing and add offline word meanings"
             git push
           else
             echo "No source changes to commit."
@@ -76,6 +390,16 @@ jobs:
             ./gradlew --no-daemon assembleDebug
           else
             gradle --no-daemon assembleDebug
+          fi
+
+      - name: Run unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f ./gradlew ]; then
+            ./gradlew --no-daemon :app:testDebugUnitTest
+          else
+            gradle --no-daemon :app:testDebugUnitTest
           fi
 
       - name: Upload APK
