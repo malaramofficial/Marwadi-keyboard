@@ -306,6 +306,26 @@ jobs:
           print(f"Dictionary now contains {len(entries)} entries.")
           PY
 
+          mkdir -p app/src/test/java/com/marwari/keyboard/voice
+          cat > app/src/test/java/com/marwari/keyboard/voice/DevanagariToRomanTest.kt <<'EOF'
+          package com.marwari.keyboard.voice
+
+          import org.junit.Assert.assertEquals
+          import org.junit.Test
+
+          class DevanagariToRomanTest {
+              @Test fun convertsCommonMarwariWordsToRoman() {
+                  assertEquals("mhaaro", DevanagariToRoman.transliterate("म्हारो"))
+                  assertEquals("raam", DevanagariToRoman.transliterate("राम"))
+                  assertEquals("paani", DevanagariToRoman.transliterate("पानी"))
+              }
+
+              @Test fun preservesSpacesAndPunctuation() {
+                  assertEquals("mhaaro naam", DevanagariToRoman.transliterate("म्हारो नाम"))
+              }
+          }
+          EOF
+
           cat > app/src/test/java/com/marwari/keyboard/suggest/WordSuggestionEngineTest.kt <<'EOF'
           package com.marwari.keyboard.suggest
 
@@ -520,6 +540,7 @@ jobs:
               }
 
               companion object {
+                  @Volatile var pendingText: String? = null
                   const val ACTION_VOICE_TEXT = "com.marwari.keyboard.VOICE_TEXT"
                   const val EXTRA_TEXT = "voice_text"
                   private const val REQUEST_MIC = 4101
