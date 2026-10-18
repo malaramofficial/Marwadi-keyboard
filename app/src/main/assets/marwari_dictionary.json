@@ -1,0 +1,859 @@
+[
+  {
+    "word": "mharo",
+    "meaning": "my / our",
+    "variants": [
+      "mhaaro",
+      "mhro",
+      "mharu"
+    ]
+  },
+  {
+    "word": "mhaari",
+    "meaning": "my (feminine)"
+  },
+  {
+    "word": "mhane",
+    "meaning": "to me",
+    "variants": [
+      "mhanai"
+    ]
+  },
+  {
+    "word": "mhe",
+    "meaning": "we"
+  },
+  {
+    "word": "tharo",
+    "meaning": "your",
+    "variants": [
+      "tharu",
+      "taro"
+    ]
+  },
+  {
+    "word": "thaari",
+    "meaning": "your (feminine)"
+  },
+  {
+    "word": "thane",
+    "meaning": "to you"
+  },
+  {
+    "word": "tame",
+    "meaning": "you (respectful)"
+  },
+  {
+    "word": "aap",
+    "meaning": "you (formal)"
+  },
+  {
+    "word": "ghano",
+    "meaning": "very / a lot",
+    "variants": [
+      "ghanu"
+    ]
+  },
+  {
+    "word": "ghani",
+    "meaning": "very (as in khamma ghani)"
+  },
+  {
+    "word": "khamma",
+    "meaning": "greeting and respect",
+    "variants": [
+      "khama"
+    ]
+  },
+  {
+    "word": "padharo",
+    "meaning": "welcome / please come in",
+    "variants": [
+      "padhro"
+    ]
+  },
+  {
+    "word": "ram ram",
+    "meaning": "greeting"
+  },
+  {
+    "word": "koni",
+    "meaning": "no / not"
+  },
+  {
+    "word": "haan",
+    "meaning": "yes"
+  },
+  {
+    "word": "nai",
+    "meaning": "no"
+  },
+  {
+    "word": "kai",
+    "meaning": "what"
+  },
+  {
+    "word": "kithe",
+    "meaning": "where"
+  },
+  {
+    "word": "kyo",
+    "meaning": "why"
+  },
+  {
+    "word": "kaise",
+    "meaning": "how"
+  },
+  {
+    "word": "kitro",
+    "meaning": "how much"
+  },
+  {
+    "word": "kad",
+    "meaning": "when"
+  },
+  {
+    "word": "kun",
+    "meaning": "who"
+  },
+  {
+    "word": "ab",
+    "meaning": "now"
+  },
+  {
+    "word": "abhi",
+    "meaning": "right now"
+  },
+  {
+    "word": "aaj",
+    "meaning": "today"
+  },
+  {
+    "word": "kal",
+    "meaning": "tomorrow / yesterday"
+  },
+  {
+    "word": "pachhi",
+    "meaning": "later / afterwards"
+  },
+  {
+    "word": "hun",
+    "meaning": "I (I am)"
+  },
+  {
+    "word": "hai",
+    "meaning": "is"
+  },
+  {
+    "word": "ho",
+    "meaning": "is / are"
+  },
+  {
+    "word": "oo",
+    "meaning": "he / she"
+  },
+  {
+    "word": "ve",
+    "meaning": "they"
+  },
+  {
+    "word": "ya",
+    "meaning": "this"
+  },
+  {
+    "word": "wa",
+    "meaning": "that"
+  },
+  {
+    "word": "bhalo",
+    "meaning": "good"
+  },
+  {
+    "word": "achho",
+    "meaning": "good / nice"
+  },
+  {
+    "word": "bura",
+    "meaning": "bad"
+  },
+  {
+    "word": "bahut",
+    "meaning": "very much"
+  },
+  {
+    "word": "sachi",
+    "meaning": "true / truly"
+  },
+  {
+    "word": "jaroor",
+    "meaning": "certainly"
+  },
+  {
+    "word": "chalo",
+    "meaning": "let's go"
+  },
+  {
+    "word": "aavo",
+    "meaning": "come"
+  },
+  {
+    "word": "jaavo",
+    "meaning": "go"
+  },
+  {
+    "word": "khaavo",
+    "meaning": "eat"
+  },
+  {
+    "word": "pivo",
+    "meaning": "drink"
+  },
+  {
+    "word": "bolo",
+    "meaning": "speak / say"
+  },
+  {
+    "word": "suno",
+    "meaning": "listen"
+  },
+  {
+    "word": "dekho",
+    "meaning": "look / see"
+  },
+  {
+    "word": "karo",
+    "meaning": "do"
+  },
+  {
+    "word": "mat",
+    "meaning": "do not"
+  },
+  {
+    "word": "rehvo",
+    "meaning": "stay"
+  },
+  {
+    "word": "kaho",
+    "meaning": "tell"
+  },
+  {
+    "word": "sab",
+    "meaning": "all"
+  },
+  {
+    "word": "sagla",
+    "meaning": "all / everyone"
+  },
+  {
+    "word": "kuchh",
+    "meaning": "something"
+  },
+  {
+    "word": "hamesha",
+    "meaning": "always"
+  },
+  {
+    "word": "bas",
+    "meaning": "enough / just"
+  },
+  {
+    "word": "ghar",
+    "meaning": "home"
+  },
+  {
+    "word": "gaon",
+    "meaning": "village"
+  },
+  {
+    "word": "shahar",
+    "meaning": "city"
+  },
+  {
+    "word": "rasoi",
+    "meaning": "kitchen"
+  },
+  {
+    "word": "kamar",
+    "meaning": "room"
+  },
+  {
+    "word": "dukan",
+    "meaning": "shop"
+  },
+  {
+    "word": "sadak",
+    "meaning": "road"
+  },
+  {
+    "word": "gaadi",
+    "meaning": "vehicle"
+  },
+  {
+    "word": "paani",
+    "meaning": "water"
+  },
+  {
+    "word": "roti",
+    "meaning": "bread"
+  },
+  {
+    "word": "rotli",
+    "meaning": "flatbread"
+  },
+  {
+    "word": "baati",
+    "meaning": "baked wheat ball"
+  },
+  {
+    "word": "chai",
+    "meaning": "tea"
+  },
+  {
+    "word": "dal",
+    "meaning": "lentils"
+  },
+  {
+    "word": "khana",
+    "meaning": "food"
+  },
+  {
+    "word": "meetho",
+    "meaning": "sweet"
+  },
+  {
+    "word": "khatta",
+    "meaning": "sour"
+  },
+  {
+    "word": "teekho",
+    "meaning": "spicy"
+  },
+  {
+    "word": "mirchi",
+    "meaning": "chilli"
+  },
+  {
+    "word": "namak",
+    "meaning": "salt"
+  },
+  {
+    "word": "masala",
+    "meaning": "spices"
+  },
+  {
+    "word": "pyaj",
+    "meaning": "onion"
+  },
+  {
+    "word": "aloo",
+    "meaning": "potato"
+  },
+  {
+    "word": "tamatar",
+    "meaning": "tomato"
+  },
+  {
+    "word": "doodh",
+    "meaning": "milk"
+  },
+  {
+    "word": "dahi",
+    "meaning": "curd"
+  },
+  {
+    "word": "ghee",
+    "meaning": "clarified butter"
+  },
+  {
+    "word": "churma",
+    "meaning": "sweet dish of crushed wheat"
+  },
+  {
+    "word": "ghevar",
+    "meaning": "Rajasthani sweet"
+  },
+  {
+    "word": "bhai",
+    "meaning": "brother"
+  },
+  {
+    "word": "bai",
+    "meaning": "sister / woman"
+  },
+  {
+    "word": "maa",
+    "meaning": "mother"
+  },
+  {
+    "word": "baap",
+    "meaning": "father"
+  },
+  {
+    "word": "dadi",
+    "meaning": "grandmother"
+  },
+  {
+    "word": "dada",
+    "meaning": "grandfather"
+  },
+  {
+    "word": "kaka",
+    "meaning": "uncle (father's younger brother)"
+  },
+  {
+    "word": "mama",
+    "meaning": "maternal uncle"
+  },
+  {
+    "word": "masi",
+    "meaning": "aunt (mother's sister)"
+  },
+  {
+    "word": "bhua",
+    "meaning": "aunt (father's sister)"
+  },
+  {
+    "word": "bhabhi",
+    "meaning": "sister-in-law"
+  },
+  {
+    "word": "jiju",
+    "meaning": "brother-in-law"
+  },
+  {
+    "word": "sasu",
+    "meaning": "mother-in-law"
+  },
+  {
+    "word": "sasro",
+    "meaning": "father-in-law"
+  },
+  {
+    "word": "chokro",
+    "meaning": "boy / son"
+  },
+  {
+    "word": "chokri",
+    "meaning": "girl / daughter"
+  },
+  {
+    "word": "gharvali",
+    "meaning": "wife"
+  },
+  {
+    "word": "sathi",
+    "meaning": "friend"
+  },
+  {
+    "word": "pyaro",
+    "meaning": "dear"
+  },
+  {
+    "word": "khushi",
+    "meaning": "happiness"
+  },
+  {
+    "word": "yaad",
+    "meaning": "memory / remember"
+  },
+  {
+    "word": "hukam",
+    "meaning": "order / permission (respectful)"
+  },
+  {
+    "word": "kaam",
+    "meaning": "work"
+  },
+  {
+    "word": "paise",
+    "meaning": "money"
+  },
+  {
+    "word": "samay",
+    "meaning": "time"
+  },
+  {
+    "word": "kitab",
+    "meaning": "book"
+  },
+  {
+    "word": "school",
+    "meaning": "school"
+  },
+  {
+    "word": "phone",
+    "meaning": "phone"
+  },
+  {
+    "word": "barsaat",
+    "meaning": "rain"
+  },
+  {
+    "word": "garmi",
+    "meaning": "heat"
+  },
+  {
+    "word": "thandi",
+    "meaning": "cold"
+  },
+  {
+    "word": "dhoop",
+    "meaning": "sunlight"
+  },
+  {
+    "word": "bhagwan",
+    "meaning": "god"
+  },
+  {
+    "word": "safa",
+    "meaning": "turban"
+  },
+  {
+    "word": "ghoomar",
+    "meaning": "traditional dance"
+  },
+  {
+    "word": "marwar",
+    "meaning": "Marwar region"
+  },
+  {
+    "word": "rajasthan",
+    "meaning": "Rajasthan"
+  },
+  {
+    "word": "batao",
+    "meaning": "tell me",
+    "variants": [
+      "btao"
+    ]
+  },
+  {
+    "word": "samjho",
+    "meaning": "understand",
+    "variants": []
+  },
+  {
+    "word": "likho",
+    "meaning": "write",
+    "variants": []
+  },
+  {
+    "word": "padhho",
+    "meaning": "read / study",
+    "variants": [
+      "padho"
+    ]
+  },
+  {
+    "word": "boliyo",
+    "meaning": "please speak",
+    "variants": []
+  },
+  {
+    "word": "suniyo",
+    "meaning": "please listen",
+    "variants": []
+  },
+  {
+    "word": "jaldi",
+    "meaning": "quickly",
+    "variants": []
+  },
+  {
+    "word": "dhire",
+    "meaning": "slowly",
+    "variants": [
+      "dheere"
+    ]
+  },
+  {
+    "word": "saro",
+    "meaning": "good / fine",
+    "variants": [
+      "saaro"
+    ]
+  },
+  {
+    "word": "theek",
+    "meaning": "okay / fine",
+    "variants": [
+      "thik"
+    ]
+  },
+  {
+    "word": "kem",
+    "meaning": "how",
+    "variants": [
+      "kaim"
+    ]
+  },
+  {
+    "word": "parivaar",
+    "meaning": "family",
+    "variants": [
+      "parivar"
+    ]
+  },
+  {
+    "word": "mitra",
+    "meaning": "friend",
+    "variants": []
+  },
+  {
+    "word": "khush",
+    "meaning": "happy",
+    "variants": []
+  },
+  {
+    "word": "dukhi",
+    "meaning": "sad",
+    "variants": []
+  },
+  {
+    "word": "bhookh",
+    "meaning": "hunger",
+    "variants": [
+      "bhukh"
+    ]
+  },
+  {
+    "word": "pyaas",
+    "meaning": "thirst",
+    "variants": [
+      "pyas"
+    ]
+  },
+  {
+    "word": "baitho",
+    "meaning": "sit",
+    "variants": []
+  },
+  {
+    "word": "utho",
+    "meaning": "get up",
+    "variants": []
+  },
+  {
+    "word": "rukho",
+    "meaning": "wait / stop",
+    "variants": [
+      "ruko"
+    ]
+  },
+  {
+    "word": "madad",
+    "meaning": "help",
+    "variants": []
+  },
+  {
+    "word": "dhanyavaad",
+    "meaning": "thank you",
+    "variants": [
+      "dhanyavad"
+    ]
+  },
+  {
+    "word": "maaf",
+    "meaning": "sorry / forgive",
+    "variants": []
+  },
+  {
+    "word": "khabar",
+    "meaning": "news / information",
+    "variants": []
+  },
+  {
+    "word": "aavjo",
+    "meaning": "goodbye / come again",
+    "variants": [
+      "avjo"
+    ]
+  },
+  {
+    "word": "naam",
+    "meaning": "name",
+    "variants": []
+  },
+  {
+    "word": "bajar",
+    "meaning": "market",
+    "variants": [
+      "bazaar"
+    ]
+  },
+  {
+    "word": "kheti",
+    "meaning": "farming",
+    "variants": []
+  },
+  {
+    "word": "kisan",
+    "meaning": "farmer",
+    "variants": []
+  },
+  {
+    "word": "pashu",
+    "meaning": "animal / livestock",
+    "variants": []
+  },
+  {
+    "word": "sacho",
+    "meaning": "true",
+    "variants": [
+      "saacho"
+    ]
+  },
+  {
+    "word": "jhooth",
+    "meaning": "lie / falsehood",
+    "variants": []
+  },
+  {
+    "word": "aapro",
+    "meaning": "our",
+    "variants": [
+      "aapno"
+    ]
+  },
+  {
+    "word": "aapri",
+    "meaning": "ours",
+    "variants": [
+      "aapni"
+    ]
+  },
+  {
+    "word": "thare",
+    "meaning": "your / at your place",
+    "variants": []
+  },
+  {
+    "word": "mhare",
+    "meaning": "my / at my place",
+    "variants": []
+  },
+  {
+    "word": "kune",
+    "meaning": "who / to whom",
+    "variants": [
+      "kun"
+    ]
+  },
+  {
+    "word": "ketro",
+    "meaning": "how much",
+    "variants": [
+      "kitro"
+    ]
+  },
+  {
+    "word": "hivde",
+    "meaning": "heart",
+    "variants": []
+  },
+  {
+    "word": "aankh",
+    "meaning": "eye",
+    "variants": [
+      "aakh"
+    ]
+  },
+  {
+    "word": "haath",
+    "meaning": "hand",
+    "variants": [
+      "hath"
+    ]
+  },
+  {
+    "word": "pagh",
+    "meaning": "turban",
+    "variants": [
+      "pag"
+    ]
+  },
+  {
+    "word": "kapda",
+    "meaning": "cloth",
+    "variants": [
+      "kapdo"
+    ]
+  },
+  {
+    "word": "rang",
+    "meaning": "colour",
+    "variants": []
+  },
+  {
+    "word": "safed",
+    "meaning": "white",
+    "variants": []
+  },
+  {
+    "word": "kalo",
+    "meaning": "black",
+    "variants": [
+      "kaalo"
+    ]
+  },
+  {
+    "word": "neelo",
+    "meaning": "blue",
+    "variants": [
+      "nilo"
+    ]
+  },
+  {
+    "word": "hariyo",
+    "meaning": "green",
+    "variants": []
+  },
+  {
+    "word": "chhoto",
+    "meaning": "small / young",
+    "variants": [
+      "choto"
+    ]
+  },
+  {
+    "word": "moto",
+    "meaning": "big",
+    "variants": []
+  },
+  {
+    "word": "navi",
+    "meaning": "new",
+    "variants": [
+      "nayi"
+    ]
+  },
+  {
+    "word": "purano",
+    "meaning": "old",
+    "variants": []
+  },
+  {
+    "word": "savere",
+    "meaning": "in the morning",
+    "variants": [
+      "sawere"
+    ]
+  },
+  {
+    "word": "raat",
+    "meaning": "night",
+    "variants": []
+  },
+  {
+    "word": "mausam",
+    "meaning": "weather / season",
+    "variants": []
+  },
+  {
+    "word": "varsad",
+    "meaning": "rain",
+    "variants": [
+      "barsaat"
+    ]
+  }
+]
