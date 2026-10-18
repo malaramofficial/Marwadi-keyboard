@@ -545,6 +545,89 @@ jobs:
           p.write_text(s, encoding="utf-8")
           PY
 
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("app/src/main/java/com/marwari/keyboard/ime/MarwariInputMethodService.kt")
+          s = p.read_text(encoding="utf-8")
+          s = s.replace("import android.graphics.Color", """import android.content.BroadcastReceiver
+          import android.content.Context
+          import android.content.Intent
+          import android.content.IntentFilter
+          import android.os.Build
+          import android.graphics.Color""", 1)
+          s = s.replace("import com.marwari.keyboard.suggest.WordSuggestionEngine", """import com.marwari.keyboard.suggest.WordSuggestionEngine
+          import com.marwari.keyboard.voice.VoiceInputActivity""", 1)
+          s = s.replace("""    private var secureField = false
+
+              override fun onCreate() {""", """    private var secureField = false
+              private var voiceReceiverRegistered = false
+              private val voiceReceiver = object : BroadcastReceiver() {
+                  override fun onReceive(context: Context?, intent: Intent?) {
+                      val text = intent?.getStringExtra(VoiceInputActivity.EXTRA_TEXT).orEmpty()
+                      if (text.isNotBlank()) {
+                          val connection = currentInputConnection
+                          if (connection != null) {
+                              connection.commitText(text, 1)
+                              VoiceInputActivity.pendingText = null
+                          } else {
+                              VoiceInputActivity.pendingText = text
+                          }
+                      }
+                  }
+              }
+
+              override fun onCreate() {""", 1)
+          s = s.replace("""                  engine = WordSuggestionEngine(MarwariDictionaryRepository(this).load())
+              }""", """                  engine = WordSuggestionEngine(MarwariDictionaryRepository(this).load())
+                  val filter = IntentFilter(VoiceInputActivity.ACTION_VOICE_TEXT)
+                  if (Build.VERSION.SDK_INT >= 33) {
+                      registerReceiver(voiceReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                  } else {
+                      @Suppress("DEPRECATION")
+                      registerReceiver(voiceReceiver, filter)
+                  }
+                  voiceReceiverRegistered = true
+              }
+
+              override fun onDestroy() {
+                  if (voiceReceiverRegistered) {
+                      unregisterReceiver(voiceReceiver)
+                      voiceReceiverRegistered = false
+                  }
+                  super.onDestroy()
+              }""", 1)
+          s = s.replace("""                  if (::keyRows.isInitialized) renderKeys()
+                  refreshSuggestions()
+              }""", """                  if (::keyRows.isInitialized) renderKeys()
+                  val pending = VoiceInputActivity.pendingText
+                  if (!pending.isNullOrBlank()) {
+                      currentInputConnection?.commitText(pending, 1)
+                      VoiceInputActivity.pendingText = null
+                  }
+                  refreshSuggestions()
+              }""", 1)
+          s = s.replace("""              private fun showSuggestions(words: List<String>) {
+                  suggestionBar.removeAllViews()
+                  for (word in words) {""", """              private fun showSuggestions(words: List<String>) {
+                  suggestionBar.removeAllViews()
+                  if (!secureField) {
+                      val mic = TextView(this).apply {
+                          text = "🎙"
+                          textSize = 22f
+                          gravity = Gravity.CENTER
+                          contentDescription = "मारवाड़ी वॉइस टाइपिंग"
+                          setOnClickListener {
+                              startActivity(Intent(this@MarwariInputMethodService, VoiceInputActivity::class.java)
+                                  .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                          }
+                      }
+                      suggestionBar.addView(mic, LinearLayout.LayoutParams(dp(44), MATCH))
+                  }
+                  for (word in words) {""", 1)
+          p.write_text(s, encoding="utf-8")
+          print("Patched keyboard with microphone button and voice result receiver.")
+          PY
+
           # Fix the InputMethodService API name in the archived starter source.
           sed -i 's/sendDownUpKeyEvent(/sendDownUpKeyEvents(/g' app/src/main/java/com/marwari/keyboard/ime/MarwariInputMethodService.kt
 
