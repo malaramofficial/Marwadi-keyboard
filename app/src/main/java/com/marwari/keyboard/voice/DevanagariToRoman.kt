@@ -14,12 +14,12 @@ object DevanagariToRoman {
         'फ़' to "f"
     )
     private val vowels = mapOf(
-        'अ' to "a", 'आ' to "aa", 'इ' to "i", 'ई' to "ee", 'उ' to "u",
+        'अ' to "a", 'आ' to "aa", 'इ' to "i", 'ई' to "i", 'उ' to "u",
         'ऊ' to "oo", 'ऋ' to "ri", 'ए' to "e", 'ऐ' to "ai", 'ओ' to "o",
         'औ' to "au", 'ऑ' to "o"
     )
     private val matras = mapOf(
-        'ा' to "aa", 'ि' to "i", 'ी' to "ee", 'ु' to "u", 'ू' to "oo",
+        'ा' to "aa", 'ि' to "i", 'ी' to "i", 'ु' to "u", 'ू' to "oo",
         'ृ' to "ri", 'े' to "e", 'ै' to "ai", 'ो' to "o", 'ौ' to "au",
         'ॉ' to "o", 'ॅ' to "e"
     )

@@ -54,6 +54,22 @@ class MarwariInputMethodService : InputMethodService() {
     override fun onCreate() {
         super.onCreate()
         engine = WordSuggestionEngine(MarwariDictionaryRepository(this).load())
+        val filter = IntentFilter(VoiceInputActivity.ACTION_VOICE_TEXT)
+        if (Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(voiceReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            registerReceiver(voiceReceiver, filter)
+        }
+        voiceReceiverRegistered = true
+    }
+
+    override fun onDestroy() {
+        if (voiceReceiverRegistered) {
+            unregisterReceiver(voiceReceiver)
+            voiceReceiverRegistered = false
+        }
+        super.onDestroy()
     }
 
     override fun onCreateInputView(): View {
@@ -83,6 +99,11 @@ class MarwariInputMethodService : InputMethodService() {
         symbolsMode = false
         secureField = isSecureField(info)
         if (::keyRows.isInitialized) renderKeys()
+        val pending = VoiceInputActivity.pendingText
+        if (!pending.isNullOrBlank()) {
+            currentInputConnection?.commitText(pending, 1)
+            VoiceInputActivity.pendingText = null
+        }
         refreshSuggestions()
     }
 
@@ -212,6 +233,19 @@ class MarwariInputMethodService : InputMethodService() {
 
     private fun showSuggestions(words: List<String>) {
         suggestionBar.removeAllViews()
+        if (!secureField) {
+            val mic = TextView(this).apply {
+                text = "🎙"
+                textSize = 22f
+                gravity = Gravity.CENTER
+                contentDescription = "मारवाड़ी वॉइस टाइपिंग"
+                setOnClickListener {
+                    startActivity(Intent(this@MarwariInputMethodService, VoiceInputActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
+            }
+            suggestionBar.addView(mic, LinearLayout.LayoutParams(dp(44), MATCH))
+        }
         for (word in words) {
             val view = TextView(this).apply {
                 text = word
