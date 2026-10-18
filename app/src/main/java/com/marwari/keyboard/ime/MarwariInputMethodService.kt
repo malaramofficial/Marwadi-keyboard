@@ -1,5 +1,10 @@
 package com.marwari.keyboard.ime
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.inputmethodservice.InputMethodService
@@ -12,6 +17,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.marwari.keyboard.data.MarwariDictionaryRepository
 import com.marwari.keyboard.suggest.WordSuggestionEngine
+import com.marwari.keyboard.voice.VoiceInputActivity
 
 /**
  * The Marwari keyboard (system input method).
@@ -29,6 +35,21 @@ class MarwariInputMethodService : InputMethodService() {
     private var shiftOn = false
     private var symbolsMode = false
     private var secureField = false
+    private var voiceReceiverRegistered = false
+    private val voiceReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val text = intent?.getStringExtra(VoiceInputActivity.EXTRA_TEXT).orEmpty()
+            if (text.isNotBlank()) {
+                val connection = currentInputConnection
+                if (connection != null) {
+                    connection.commitText(text, 1)
+                    VoiceInputActivity.pendingText = null
+                } else {
+                    VoiceInputActivity.pendingText = text
+                }
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
