@@ -649,6 +649,79 @@ jobs:
           print("Patched keyboard with microphone button and voice result receiver.")
           PY
 
+          # Complete IME receiver/button wiring and normalize common Roman spellings.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("app/src/main/java/com/marwari/keyboard/ime/MarwariInputMethodService.kt")
+          s = p.read_text(encoding="utf-8")
+          old = """        engine = WordSuggestionEngine(MarwariDictionaryRepository(this).load())
+              }"""
+          new = """        engine = WordSuggestionEngine(MarwariDictionaryRepository(this).load())
+                  val filter = IntentFilter(VoiceInputActivity.ACTION_VOICE_TEXT)
+                  if (Build.VERSION.SDK_INT >= 33) {
+                      registerReceiver(voiceReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                  } else {
+                      @Suppress("DEPRECATION")
+                      registerReceiver(voiceReceiver, filter)
+                  }
+                  voiceReceiverRegistered = true
+              }
+
+              override fun onDestroy() {
+                  if (voiceReceiverRegistered) {
+                      unregisterReceiver(voiceReceiver)
+                      voiceReceiverRegistered = false
+                  }
+                  super.onDestroy()
+              }"""
+          if old in s and "registerReceiver(voiceReceiver" not in s:
+              s = s.replace(old, new, 1)
+          old = """        if (::keyRows.isInitialized) renderKeys()
+                  refreshSuggestions()
+              }"""
+          new = """        if (::keyRows.isInitialized) renderKeys()
+                  val pending = VoiceInputActivity.pendingText
+                  if (!pending.isNullOrBlank()) {
+                      currentInputConnection?.commitText(pending, 1)
+                      VoiceInputActivity.pendingText = null
+                  }
+                  refreshSuggestions()
+              }"""
+          if old in s:
+              s = s.replace(old, new, 1)
+          old = """        suggestionBar.removeAllViews()
+                  for (word in words) {"""
+          new = """        suggestionBar.removeAllViews()
+                  if (!secureField) {
+                      val mic = TextView(this).apply {
+                          text = "🎙"
+                          textSize = 22f
+                          gravity = Gravity.CENTER
+                          contentDescription = "मारवाड़ी वॉइस टाइपिंग"
+                          setOnClickListener {
+                              startActivity(Intent(this@MarwariInputMethodService, VoiceInputActivity::class.java)
+                                  .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                          }
+                      }
+                      suggestionBar.addView(mic, LinearLayout.LayoutParams(dp(44), MATCH))
+                  }
+                  for (word in words) {"""
+          if old in s:
+              s = s.replace(old, new, 1)
+          p.write_text(s, encoding="utf-8")
+          a = Path("app/src/main/java/com/marwari/keyboard/voice/VoiceInputActivity.kt")
+          t = a.read_text(encoding="utf-8")
+          t = t.replace("""                val roman = DevanagariToRoman.transliterate(heard)
+                              sendBroadcast(Intent(ACTION_VOICE_TEXT)""", """                val roman = DevanagariToRoman.transliterate(heard)
+                              pendingText = roman
+                              sendBroadcast(Intent(ACTION_VOICE_TEXT)""", 1)
+          a.write_text(t, encoding="utf-8")
+          d = Path("app/src/main/java/com/marwari/keyboard/voice/DevanagariToRoman.kt")
+          t = d.read_text(encoding="utf-8").replace("'ई' to " + '"ee"', "'ई' to " + '"i"').replace("'ी' to " + '"ee"', "'ी' to " + '"i"')
+          d.write_text(t, encoding="utf-8")
+          print("Verified voice receiver, mic button, pending result, and Roman vowel spelling.")
+          PY
+
           # Fix the InputMethodService API name in the archived starter source.
           sed -i 's/sendDownUpKeyEvent(/sendDownUpKeyEvents(/g' app/src/main/java/com/marwari/keyboard/ime/MarwariInputMethodService.kt
 
