@@ -13,6 +13,10 @@ class WordSuggestionEngine(entries: List<DictionaryEntry>) {
     fun suggest(typed: String, limit: Int = MAX_SUGGESTIONS): List<String> {
         val prefix = typed.trim().lowercase()
         if (prefix.isEmpty() || limit <= 0) return emptyList()
+        val hasPrefixMatch = entries.any { entry ->
+            entry.word.lowercase().startsWith(prefix) ||
+                entry.variants.any { it.lowercase().startsWith(prefix) }
+        }
         return entries.asSequence()
             .filter { !it.word.contains(' ') }
             .mapNotNull { entry ->
@@ -21,7 +25,7 @@ class WordSuggestionEngine(entries: List<DictionaryEntry>) {
                 val score = when {
                     canonical.startsWith(prefix) -> 0
                     variants.any { it.startsWith(prefix) } -> 1
-                    prefix.length >= 3 && (
+                    !hasPrefixMatch && prefix.length >= 3 && (
                         oneEditAway(prefix, canonical.take(prefix.length)) ||
                         variants.any { oneEditAway(prefix, it.take(prefix.length)) }
                     ) -> 2
